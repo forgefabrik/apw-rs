@@ -1,5 +1,7 @@
 /target
 **/*.rs.bk
-Cargo.lock
 .DS_Store
 *.swp
+# Keep Cargo.lock because all four tools are [[bin]] (binary) crates; for
+# reproducible CI builds we need to pin the lockfile. When the workspace
+# grows pure-library crates we'll reconsider.
