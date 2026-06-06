@@ -1193,4 +1193,67 @@ Once M0 is approved and merged:
 
 ---
 
-**Plan ready. Execute Phase 0 → Phase 7, commit at each task boundary, and verify CI passes.**
+## Verification Gates (must all pass)
+
+M0 is **not** complete until every gate below passes in sequence. CI on Linux + macOS is the final proof, not the plan itself.
+
+### Gate 1 — Developer Local Verification
+
+```bash
+cargo build --workspace
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --check
+```
+
+All four must exit 0. If any fails, fix locally, re-run.
+
+### Gate 2 — Fresh-Clone Verification
+
+Run the same four commands in `/tmp/apw-rs-fresh-clone` after `git clone https://github.com/forgefabrik/apw-rs.git` and `git checkout m0-skeleton`. Catches issues hidden by local caches or unstaged files. Gate 1 is necessary but not sufficient.
+
+### Gate 3 — GitHub Actions CI
+
+Push the `m0-skeleton` tag. The matrix (`ubuntu-latest` + `macos-latest`, Rust 1.82) must pass `build` + `test` + `clippy` + `fmt` on both runners. CI is the final gate; local green does not override CI red.
+
+### Gate 4 — Documentation Completeness
+
+- [ ] `docs/ROADMAP.md` populated (not placeholder)
+- [ ] `docs/EVENTS.md` references `apw-protocol::Event` types
+- [ ] `docs/PIXEL.md` documents the M4+ Aseprite workflow
+- [ ] `docs/adr/0000-template.md` ready for future ADRs
+- [ ] `docs/adr/0001-panic-policy-specification.md` deferred to M1
+- [ ] Root `README.md` has correct crate count
+- [ ] Design spec (`specs/2026-06-05-apw-rs-workspace-skeleton-design.md`) is the single source of truth for boundaries and policies
+
+### Gate 5 — Crate Structure
+
+```bash
+cargo metadata --format-version 1 | jq '.workspace_members | length'   # expect 10
+grep -c "#!\[forbid(unsafe_code)\]" crates/ tools/                      # expect 10
+for c in apw-office apw-manager apw-gateway apw-pixel-plugin; do
+  ! grep -E "apw-(server|kernel|engine|store)" "crates/$c/Cargo.toml"
+done                                                                    # expect silent
+```
+
+### Gate 6 — Tag Verification
+
+```bash
+git tag -l m0-skeleton                 # expect: m0-skeleton
+git cat-file -t m0-skeleton            # expect: tag (annotated, not lightweight)
+```
+
+### Known Limitations (deferred to M1+)
+
+| Limitation | Impact | Planned fix |
+|---|---|---|
+| Grep-based Layer 1/2 | Cannot detect transitive deps, feature flags, path indirection | Replace with `cargo metadata` graph check |
+| No Layer 3 snapshots | Canonical wire format not yet pinned | Add in M1 when canonical serializer lands |
+| No business logic | M0 is a type-safe blueprint | Implementation in M1+ |
+| `cargo-deny` not active | No license/advisory gates | Activate in M1 CI |
+
+### Decision Points
+
+- **Proceed to M0 only if** every gate above is expected to pass. Risk is low for a skeleton.
+- **Gate 1 alone is not enough.** Always do Gate 2 (fresh clone) before pushing the tag.
+- **If Gate 3 (CI) fails, do not declare M0 complete.** Investigate the platform-specific root cause and fix in main.
