@@ -187,7 +187,117 @@ The only Rust source. Three crates, 467 commits, 184★. Drives the `apw-office`
 
 ---
 
-## 7. Cross-cutting (introduced by `apw-rs` itself)
+## 7. Scope split: Phase 1 (Visual Office Foundation) vs Phase 2 (Economy & Multi-Role Roadmap)
+
+`apw-rs` is built in two clearly separated phases. The **visual office is the foundation**; everything in Phase 2 lands on top of it.
+
+| | **Phase 1 — Visual Office Foundation** (in scope, current build) | **Phase 2 — Economy & Multi-Role** (roadmap, after Phase 1) |
+|---|---|---|
+| **What it is** | The pixel-art office surface — agents as characters, projects as rooms, per-project towers, living-room personalization, shop UIs | The economic engine + multi-role orchestration that drives the office: tower-climb mechanics, money, CEO shopping, LM-Studio-driven LLM agents, customer→CEO→worker project flow |
+| **When it ships** | After the M0 (workspace skeleton) + M4 (office TUI + pixel pipeline) milestones | Roadmap. Not part of any current M-numbered milestone. The Phase 2 doc is the **last** deliverable, written after the office is finished. |
+| **Crate surface used** | `apw-protocol` (wire types), `apw-pixel-plugin` (sprite/character data), `apw-office` (TUI renderer), `apw-gateway` (web control plane) | Adds `apw-kernel` (state machine), `apw-engine` (LLM, agents, scheduler), `apw-store` (ledger + persistence), `apw-server` (HTTP + SSE) on top of Phase 1 |
+| **Where the data comes from** | A simple local JSON / sample data adapter that exercises the office surfaces | The kernel event log + LM Studio LLM with TypeScript-plugin tool surface |
+| **In this file** | §3–§6 (sources), §7 (cross-cutting) | **§9 (this document)** |
+
+The protocol types in `apw-protocol/src/lib.rs` (Role, AuthorityMap, Capability, Event variants like `AgentPromoted`, `ItemPurchased`, `CapabilityDenied`) are **forward-compatible placeholders**: they exist so Phase 1 can render the *state* of Phase 2 systems without Phase 2 existing. The implementations come in Phase 2.
+
+---
+
+## 8. Phase 2 — Economy & Multi-Role (Roadmap)
+
+> **Status: deferred (Phase 2).** Not part of the current build. This section is the architectural seed: it documents the bigger vision and the protocol-level primitives that the office already anticipates, so that the Phase 1 surface has stable shape and the Phase 2 build can land without breaking it.
+>
+> The full Phase 2 design — including the LM Studio plugin bridge, the customer→CEO→worker flow, the tower-climb/economy mechanics, and the office↔kernel event mapping — will be written as a separate design spec **after** the Phase 1 office is finished. That spec is the terminal deliverable mentioned in the [roadmap](docs/superpowers/2026-06-05-apw-rs-roadmap.md).
+
+### 8.1 The bigger vision (one paragraph)
+
+A customer posts a job to a project tower. The CEO — an LLM running on LM Studio via the TypeScript plugin SDK — sees the new job, decomposes it, and either spawns worker agents (each an LLM with its own tools) or assigns existing ones. Workers climb the project's tower as they deliver value (merged PRs, passing tests, milestones); higher floors unlock better office infrastructure. Workers earn money for their work and spend it in their personal living rooms. The CEO earns money from project revenue and spends it on new rooms, faster PCs (more capable models), or office perks. Visual office state is a **compiled projection of the economic state**, never the trigger. Idle state = no revenue = no growth = office decay. The game loop is a closed economic system, not a cosmetic animation.
+
+### 8.2 Architectural primitives (forward-compat types)
+
+These are the Rust types/traits that the office surface will reference in Phase 1 (as enum variants or trait method signatures, often no-op), and that the Phase 2 kernel/engine will implement.
+
+| # | Primitive | Lives in (Phase 2) | Purpose | Phase 1 status |
+|---|---|---|---|---|
+| 8.2.1 | `Role::Ceo`, `Role::Worker`, `Role::Customer` (already in `apw-protocol::Role` enum) | `apw-protocol` | Distinguishes actors in the multi-role system. CEO is the orchestrator; workers execute; customers post jobs. | **Defined** (Role enum has Ceo + 8 others; Worker/Customer to be added) |
+| 8.2.2 | `AuthorityMap = BTreeMap<ActorId, BTreeSet<Capability>>` (already in `apw-protocol`) | `apw-protocol` | Per-actor permission set. CEO has broad capabilities; workers are restricted. | **Defined** (type alias exists; population rules in Phase 2) |
+| 8.2.3 | `Capability::PromoteAgent { from_floor, to_floor }`, `Capability::AllocateLease`, `Capability::SubmitSpriteProposal`, `Capability::ModifyAuthorityMap`, `Capability::RunTowerAdmin`, `Capability::ReplayChain` | `apw-protocol` | Typed capability enum (typo-resistant). Capabilities gate the LLM's tool surface. | **Defined** (enum exists; checked at runtime in Phase 2) |
+| 8.2.4 | `BiddingEngine` trait | `apw-engine` (Phase 2) | Customer posts a job → workers/CEO submit bids → winner is chosen by rule (price, trust, ETA) → lease is allocated. Trait surface: `post_job`, `submit_bid`, `resolve`, `cancel`. | **Stub** (trait signature only, no impl) |
+| 8.2.5 | `TrustVerifier` trait | `apw-kernel` (Phase 2) | Verifies a claimed contribution is genuine. Inputs: contribution event, observed state (CI result, test result, peer review), trust score history. Output: accepted / rejected / partial. | **Stub** (trait signature only, no impl) |
+| 8.2.6 | `Wallet { actor: ActorId, balance: u64, ledger: Vec<MoneyEvent> }` | `apw-store` (Phase 2) | Per-actor money balance with append-only event ledger. CEO has a treasury; each worker has a wallet; the project tower has a money pool. | **Not defined** (to be added in Phase 2 spec) |
+| 8.2.7 | `Item { id, name, price, slot: LivingRoomSlot, effect }` + `Catalog` | `apw-protocol` + `apw-pixel-plugin` | Buyable personal items for the worker's living room: plants, posters, pets, coffee machines, mini-games, etc. | **Not defined** (Phase 2; pixel-plugin renders the inventory) |
+| 8.2.8 | `Upgrade { id, name, price, kind: Room | Pc | Perk, effect }` | `apw-protocol` + `apw-pixel-plugin` | Buyable office upgrades for the CEO: new rooms, faster PCs (model tier up), perks (review bots, automation, etc.). | **Not defined** (Phase 2) |
+| 8.2.9 | `Tower { project_id, floors: Vec<Floor>, current_height: u8, total_revenue: u64 }` | `apw-pixel-plugin` | Per-project tower. Each floor is an unlock tier. Height is a function of revenue ÷ floor_cost. | **Not defined** (Phase 2; pixel-plugin will render) |
+| 8.2.10 | `ClimbEvent { worker_id, project_id, from_floor, to_floor, revenue_delta, reason, tick }` | `apw-protocol::Event` (new variant) | Emitted by the engine when a worker has produced enough revenue to climb a floor. Drives office animation. | **Not defined** (new event variant in Phase 2) |
+| 8.2.11 | `LivingRoom { agent_id, owned_items: Vec<ItemId>, layout_grid: Vec<u8>, decoration_score: u32 }` | `apw-store` + `apw-pixel-plugin` | Per-agent personal space. Rendered as a small room adjacent to the work area. | **Not defined** (Phase 2) |
+| 8.2.12 | `MoneyEvent { actor: ActorId, delta: i64, reason: MoneyReason, tick }` | `apw-protocol::Event` (new variant) | Append-only ledger entry. Reasons: ContributionMerged, ProjectCompleted, CiPassed, ItemPurchased, UpgradePurchased, OfficeDecay. | **Not defined** (Phase 2) |
+| 8.2.13 | `CeoBridge` (LM Studio plugin adapter) | `apw-engine` (Phase 2) | The CEO is an LLM running on LM Studio via the TypeScript plugin SDK (`@lmstudio/sdk`, `LMStudioClient.act(chat, tools)`). The bridge exposes Rust kernel operations as LM Studio `tool()` definitions, so the CEO can `spawn_agent`, `assign_lease`, `purchase_upgrade`, etc. | **Not defined** (Phase 2; deferred design until Phase 1 office is done) |
+| 8.2.14 | `CustomerIntake` (job-posting flow) | `apw-server` + `apw-engine` (Phase 2) | Customer-facing surface: post a job, set a budget, see bids, accept the winner. Triggers a new project tower. | **Not defined** (Phase 2) |
+| 8.2.15 | Office decay rule | `apw-engine` (Phase 2) | If `total_revenue == 0` for N consecutive ticks, office visuals degrade (coffee quality drops, equipment becomes outdated, rooms visibly decay). Anti-AFK-wealthy state. | **Not defined** (Phase 2) |
+
+### 8.3 Phase 2 milestones (preliminary, not committed)
+
+The roadmap will be updated when the Phase 2 spec is written. A likely shape, subject to revision:
+
+- **P2.0** — Protocol extension: add `Role::Worker`, `Role::Customer`, `Wallet`, `Item`, `Upgrade`, `Tower`, `ClimbEvent`, `MoneyEvent`, `LivingRoom`, `BiddingEngine`, `TrustVerifier` to `apw-protocol` and `apw-engine` as forward-compat types (compilable, no impl).
+- **P2.1** — Engine: implement revenue computation (merged contribution, CI-passed, milestone), `MoneyEvent` emission, `Wallet` ledger.
+- **P2.2** — Engine: implement `BiddingEngine` (post-job → bid → resolve → lease).
+- **P2.3** — Kernel: implement `TrustVerifier` (verify contribution, update trust score).
+- **P2.4** — Engine: implement `ClimbEvent` emission and `Tower` height computation.
+- **P2.5** — `apw-engine::CeoBridge` — the LM Studio `@lmstudio/sdk` plugin adapter. The CEO's tool surface is the set of kernel operations gated by `AuthorityMap`.
+- **P2.6** — `apw-server` — `CustomerIntake` HTTP surface.
+- **P2.7** — `apw-pixel-plugin` — render Tower, LivingRoom, Shop UI from the new state.
+- **P2.8** — Office decay loop, end-to-end.
+
+These are **pre-decision notes**, not a commitment. The actual Phase 2 spec is the terminal deliverable.
+
+### 8.4 Why the visual office is built first
+
+The office is the **visible surface** for everything in Phase 2. If we build the office first against simple local data, we get:
+
+1. **Stable visual contracts.** Pixel placements, animation transitions, click targets, layout grids are nailed down while the data layer is simple. Phase 2 plugs into the same visual surface without breaking it.
+2. **No coupling to a specific LLM.** The Phase 1 office reads from a static adapter, so the office works without LM Studio, without a kernel, without a server. Easy to ship, easy to test.
+3. **The office is the test rig.** Once Phase 2 lands, the office becomes the live debugger — when the economic engine miscalculates revenue, you see the worker on the wrong floor; when trust is wrong, you see the worker denied a climb.
+4. **Office-first = user-first.** The thing people will look at and share is the office. Phase 2's correctness is invisible to most users; the office's look is the whole product.
+
+### 8.5 Anti-patterns the design avoids
+
+- **Cosmetic-only XP bars.** The tower is not an animation; it is a derived state of `Wallet` revenue vs `Floor.cost`. Without revenue, no climb.
+- **Idle state earns money.** No revenue from agent turn, thinking, or idle animation. Revenue only from merged contribution, CI-passed release, project completion, or customer delivery.
+- **AFK-wealthy state.** Office decay rule ensures no-output companies stagnate.
+- **LLM-as-authority.** The LLM emits `Intent` types; the kernel turns them into authoritative events. The LLM never writes to the event chain directly. (See [design spec §Determinism Policy](docs/superpowers/specs/2026-06-05-apw-rs-workspace-skeleton-design.md).)
+- **Stringly-typed roles.** `Role` is an enum, not a freeform string. Capabilities are typed, not strings. Authority is a `BTreeMap`, not a hash.
+
+### 8.6 Kernel = CEO (architectural principle)
+
+**The kernel *is* the CEO.** It is not a low-level state machine that the CEO plugs into from outside. The CEO is a *distributed role* spread across three components, and the kernel is its **source of truth**:
+
+| Layer | Component | What it owns | What it does NOT own |
+|---|---|---|---|
+| **Authority** (the spine) | `apw-kernel` | Event chain (hash-chained), `AuthorityMap`, trust scores, `Wallet` ledger, `Tower` height computation, replay authority, freeze/snapshot | Does not decide what to do; does not generate intents |
+| **Cognition** (the brain) | LM Studio LLM (via `@lmstudio/sdk` `LMStudioClient`) | Reads kernel state, generates `Intent` types (bid, assign-lease, purchase-upgrade, spawn-agent), calls kernel operations through the engine bridge | Does not write to the event chain; does not bypass `AuthorityMap` |
+| **Execution** (the hands) | `apw-engine` | Validates intents against `AuthorityMap`, turns validated intents into authoritative events in the kernel, runs the LLM plugin bridge, manages agents and leases | Does not generate intents; does not own authoritative state |
+
+**Consequences for the design:**
+
+1. **The CEO is not an LLM.** The CEO is the trio (kernel + LLM + engine) working together. A failure of any one breaks the CEO; a clean handoff between them is the design problem. The visual office shows the *joint output* of the trio.
+2. **The kernel is replay-authoritative, always.** Even if the LLM hallucinates, the kernel state is recoverable from the event chain. Trust is computed deterministically from the chain. The CEO's authority is *its history*, not its current LLM temperature.
+3. **The LLM's tool surface IS the AuthorityMap.** The CEO can only call kernel operations it has capabilities for. `Capability::PromoteAgent`, `Capability::AllocateLease`, `Capability::RunTowerAdmin` etc. are the typed tools the LM Studio plugin exposes. The plugin IS the CEO's bridge to its own authority.
+4. **The engine is a *reducer*.** It takes `Intent` → validates → emits `Event`. The LLM never writes events directly. (See design spec §Determinism Policy #3.)
+5. **The tower is a kernel projection.** Tower height is derived from `Wallet` + `Floor.cost` + `ClimbEvent` history. The LLM can suggest a climb; only the kernel can authoritatively record one. The visual office reads the kernel's record.
+
+**Why this matters for Phase 1:**
+
+- The Phase 1 visual office reads from a *static adapter* (no real kernel, no real LLM). The office sees a fake `AuthorityMap`, fake `Wallet` ledgers, fake `Tower` state — all seeded from sample data.
+- The visual contracts (sprite for "CEO", sprite for "climbing worker", sprite for "rich living room", sprite for "empty office decay") are designed against this fake state.
+- When Phase 2 lands, the same visual contracts read the *real* kernel state. The office's UI doesn't change. The data source does.
+- The kernel-first principle means: when Phase 2 is designed, the kernel gets the `Wallet`, `Tower`, `ClimbEvent`, `MoneyEvent` types first; the engine gets the LM Studio bridge second; the office's pixel data adapter switches from fake to real last.
+
+**Naming note:** `Role::Ceo` in the protocol is the *role tag* the kernel applies to the (kernel+LLM+engine) trio when it acts. The trio has many internal events (LLM emits `Intent`, engine emits `Event`); the role tag tells the rest of the system "this event was produced by the CEO's joint action". The kernel is the part of the trio that *can* be tagged `Ceo` for the purposes of `AuthorityMap` lookups, because the kernel is the authoritative spine.
+
+---
+
+## 9. Cross-cutting (introduced by `apw-rs` itself)
 
 These are not from any single upstream; they are new in `apw-rs` to satisfy governance policies locked in the [design spec](docs/superpowers/specs/2026-06-05-apw-rs-workspace-skeleton-design.md).
 
@@ -206,7 +316,7 @@ These are not from any single upstream; they are new in `apw-rs` to satisfy gove
 
 ---
 
-## 8. How to use this file
+## 10. How to use this file
 
 - **Adding a feature?** Find the source row, add a row to the corresponding §3–§6 with `planned (Mx)`, commit, push. If a feature has no upstream, add it to §7.
 - **Porting a feature?** Change status from `planned (Mx)` to `porting (Mx)` when the work starts, and to `done` when the feature ships. The commit that lands the change updates this file in the same diff.
