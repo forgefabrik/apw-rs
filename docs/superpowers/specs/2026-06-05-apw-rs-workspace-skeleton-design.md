@@ -629,3 +629,15 @@ These are deliberately NOT answered in the skeleton; they are tracked here so M1
    - `apw-canonical` — the canonical serializer, used by all the above
    The split is **deferred** — the rule "crate only if boundary exists" applies. Today, a single `apw-protocol` with a strong boundary test is the right shape. Tomorrow, when `apw-time` and `apw-capability` want different release cadences or different dep sets, the split happens with an ADR.
 8. **Future `apw-testkit` crate (not for M0).** By M2/M3 the test suites across `apw-kernel`, `apw-engine`, and `apw-protocol` will share deterministic harnesses: replay fixtures, `FrozenClock`/`FrozenRandomSource`, snapshot builders, fake `AuthorityMap` constructors, canonical-hash helpers. The Workspace Philosophy forbids a catch-all crate, but a focused `apw-testkit` crate (a `dev-dependencies`-only crate published as a separate path, gated on ADR) is a legitimate boundary — it lets the kernel tests stay tiny and gives one place to maintain the deterministic test primitives. **Not created in M0** — the rule "crate only if multiple crates need it" applies. The trigger is the first time two crates duplicate a test helper.
+
+---
+
+## Changelog
+
+| Version | Date | Notes |
+|---|---|---|
+| **0.1 (brainstorming-approved)** | 2026-06-05 | Initial design. 8 crates + 1 binary. Policies: Time, Determinism (serialization + iteration), Capability, Async, Panic, Event Versioning, Randomness, Configuration. Boundary tests Layer 1 + 2 (Layer 3 deferred to M1). MSRV pinned to 1.82. |
+| **0.1.1 (docs cleanup)** | 2026-06-06 | Linked from the [roadmap](../2026-06-05-apw-rs-roadmap.md) and the [M0 implementation plan](../plans/2026-06-06-m0-workspace-skeleton-implementation.md). No content change to the design itself. |
+| _Future_ | _M1_ | Add Layer 3 (canonical-serialization snapshot tests), `apw-canonical` crate, replace grep boundary tests with `cargo metadata` graph validation. |
+
+This spec is the single source of truth for crate boundaries and policies. Any change here requires an ADR under `docs/adr/`.

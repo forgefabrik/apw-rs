@@ -2,6 +2,10 @@
 
 Tracks the milestones after the workspace skeleton (M0) lands. Each milestone is its own brainstorm → spec → plan → build cycle.
 
+> **Authoritative source** for crate boundaries, governance policies, and the `apw-protocol` wire schema is the [design spec](specs/2026-06-05-apw-rs-workspace-skeleton-design.md). This roadmap summarizes the milestone progression; refer to the spec when in doubt.
+>
+> **Implementation** is in the [M0 implementation plan](plans/2026-06-06-m0-workspace-skeleton-implementation.md), which includes the verification gates that must pass before M0 is declared complete.
+
 ## Milestones
 
 | ID | Name | Status | Goal |
