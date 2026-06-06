@@ -65,6 +65,7 @@ Changes to any of these require an ADR under `docs/adr/`.
 
 ## Documentation
 
+- [Features](docs/FEATURES.md) — single source of truth for **what** is being ported from each upstream project, **from where**, **to** which `apw-*` crate, in which milestone, and at what status. The per-feature inventory.
 - [Roadmap](docs/superpowers/2026-06-05-apw-rs-roadmap.md) — M0–M5 milestones, cross-cutting concerns (boundary-check upgrade, Aseprite pipeline, `pixtuoid-core` embedding, self-hosted LLM).
 - [Design spec](docs/superpowers/specs/2026-06-05-apw-rs-workspace-skeleton-design.md) — authoritative source for crate boundaries, policies, and the `apw-protocol` wire schema.
 - [Implementation plan](docs/superpowers/plans/2026-06-06-m0-workspace-skeleton-implementation.md) — phases 0–7 plus verification gates for executing M0.
