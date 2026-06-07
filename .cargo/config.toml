@@ -1,0 +1,11 @@
+[build]
+# Parallel compilation
+jobs = 4
+
+[registries.crates-io]
+protocol = "sparse"
+
+[net]
+# Retry on transient network failures
+retry = 3
+timeout = 60

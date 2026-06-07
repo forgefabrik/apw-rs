@@ -1,0 +1,14 @@
+[package]
+name = "apw-office"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+apw-protocol = { path = "../apw-protocol", version = "0.1.0" }
+apw-pixel-plugin = { path = "../apw-pixel-plugin", version = "0.1.0" }
+
+[dev-dependencies]
+

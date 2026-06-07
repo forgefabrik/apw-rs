@@ -1,0 +1,19 @@
+[package]
+name = "apw-server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+apw-protocol = { path = "../apw-protocol", version = "0.1.0" }
+apw-kernel = { path = "../apw-kernel", version = "0.1.0" }
+apw-engine = { path = "../apw-engine", version = "0.1.0" }
+apw-store = { path = "../apw-store", version = "0.1.0" }
+apw-pixel-plugin = { path = "../apw-pixel-plugin", version = "0.1.0" }
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+
+[dev-dependencies]
+

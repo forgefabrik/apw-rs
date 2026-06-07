@@ -1,0 +1,19 @@
+# rustfmt config for apw-rs
+# Governance: 100-char width, braces patterns that match existing code style.
+
+edition = "2021"
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Default"
+reorder_imports = true
+reorder_modules = true
+remove_nested_use_statements = true
+trailing_comma = "Vertical"
+match_arm_blocks = true
+match_block_trailing_comma = true
+blank_lines_upper_bound = 1
+struct_lit_suffix = "Never"
+# Defender from workspace lints
+format_code_in_doc_comments = true

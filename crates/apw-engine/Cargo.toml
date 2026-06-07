@@ -1,0 +1,15 @@
+[package]
+name = "apw-engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+apw-protocol = { path = "../apw-protocol", version = "0.1.0" }
+apw-kernel = { path = "../apw-kernel", version = "0.1.0" }
+apw-store = { path = "../apw-store", version = "0.1.0" }
+
+[dev-dependencies]
+

@@ -2,6 +2,32 @@
 **/*.rs.bk
 .DS_Store
 *.swp
-# Keep Cargo.lock because all four tools are [[bin]] (binary) crates; for
-# reproducible CI builds we need to pin the lockfile. When the workspace
-# grows pure-library crates we'll reconsider.
+*.swo
+*~
+
+# Cargo
+**/Cargo.lock
+
+# Build artifacts
+*.rlib
+*.rmeta
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Test artifacts
+/test-results/
+coverage/
+
+# Snapshots & fixtures generated at runtime
+*.snap
+**/snapshots/
+
+# Local configs
+.env
+.env.local
+
+# FSRS runtime
+.fsrs/

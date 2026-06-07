@@ -1,10 +1,23 @@
 [workspace]
 members = [
+    # Meta-Tools
     "tools/feature-schema",
     "tools/feature-guardian",
     "tools/feature-md",
     "tools/feature-harvester",
     "tools/feature-graph",
+    # UI-Tool
+    "tools/apw-cli",
+    # All crates
+    "crates/apw-protocol",
+    "crates/apw-kernel",
+    "crates/apw-engine",
+    "crates/apw-store",
+    "crates/apw-server",
+    "crates/apw-office",
+    "crates/apw-manager",
+    "crates/apw-gateway",
+    "crates/apw-pixel-plugin",
 ]
 resolver = "2"
 
