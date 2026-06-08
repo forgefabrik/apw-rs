@@ -10,7 +10,8 @@ rust-version.workspace = true
 clap.workspace = true
 anyhow.workspace = true
 tokio.workspace = true
+reqwest.workspace = true
 apw-protocol = { path = "../../crates/apw-protocol", version = "0.1.0" }
+apw-server = { path = "../../crates/apw-server", version = "0.1.0" }
 
 [dev-dependencies]
-

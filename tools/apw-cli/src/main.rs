@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::net::{SocketAddr, ToSocketAddrs};
 
 /// apw-rs CLI — Tower-Admin, Replay und Status.
 #[derive(Parser)]
@@ -32,24 +33,45 @@ enum Command {
     },
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Office { server } => {
-            println!("Office starten — server={server}");
-            // TODO: apw-office::run(server)
-            Ok(())
-        }
+            let bind = socket_addr_from_url(&server)?;
+            println!("Office server listening on http://{bind}");
+            apw_server::serve(apw_server::ServerConfig { bind }).await
+        },
         Command::Replay { path, from } => {
             println!("Replay — path={path}, from={from:?}");
             // TODO: apw-kernel::replay::run(path, from)
             Ok(())
-        }
+        },
         Command::Status { server } => {
-            println!("Status — server={server}");
-            // TODO: HTTP-GET /status
+            let url = format!("{}/status", server.trim_end_matches('/'));
+            let body = reqwest::get(&url).await?.error_for_status()?.text().await?;
+            println!("Status — server={server} {body}");
             Ok(())
-        }
+        },
     }
 }
 
+fn socket_addr_from_url(server: &str) -> anyhow::Result<SocketAddr> {
+    let url = reqwest::Url::parse(server)?;
+    let host = url
+        .host_str()
+        .ok_or_else(|| anyhow::anyhow!("server URL must include a host"))?;
+    let port = url
+        .port_or_known_default()
+        .ok_or_else(|| anyhow::anyhow!("server URL must include a port"))?;
+    let host = if host == "localhost" {
+        "127.0.0.1"
+    } else {
+        host
+    };
+
+    (host, port)
+        .to_socket_addrs()?
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("could not resolve {host}:{port}"))
+}
