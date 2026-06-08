@@ -137,6 +137,7 @@ dependencies = [
  "apw-protocol",
  "apw-store",
  "axum",
+ "serde",
  "tokio",
 ]
 
