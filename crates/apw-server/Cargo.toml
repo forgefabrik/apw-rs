@@ -12,8 +12,8 @@ apw-kernel = { path = "../apw-kernel", version = "0.1.0" }
 apw-engine = { path = "../apw-engine", version = "0.1.0" }
 apw-store = { path = "../apw-store", version = "0.1.0" }
 apw-pixel-plugin = { path = "../apw-pixel-plugin", version = "0.1.0" }
+anyhow = { workspace = true }
 axum = "0.7"
 tokio = { version = "1", features = ["full"] }
 
 [dev-dependencies]
-

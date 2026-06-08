@@ -8,5 +8,6 @@ rust-version.workspace = true
 
 [dependencies]
 apw-protocol = { path = "../apw-protocol", version = "0.1.0" }
+thiserror = { workspace = true }
 
 [dev-dependencies]
