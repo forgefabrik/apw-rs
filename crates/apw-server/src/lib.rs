@@ -4,6 +4,7 @@
 
 use axum::{
     extract::State,
+    http::{header, HeaderValue},
     response::{Html, IntoResponse},
     Json,
 };
@@ -31,6 +32,10 @@ pub fn routes() -> axum::Router {
     let state = AppState::default();
     axum::Router::new()
         .route("/", axum::routing::get(office))
+        .route(
+            "/assets/apw-agent-lifecycle-sheet.png",
+            axum::routing::get(agent_sheet),
+        )
         .route("/api/office/state", axum::routing::get(office_state))
         .route("/health", axum::routing::get(|| async { "ok" }))
         .route("/status", axum::routing::get(|| async { "ok" }))
@@ -45,6 +50,13 @@ pub fn routes() -> axum::Router {
 
 async fn office() -> impl IntoResponse {
     Html(OFFICE_HTML)
+}
+
+async fn agent_sheet() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, HeaderValue::from_static("image/png"))],
+        include_bytes!("../assets/apw-agent-lifecycle-sheet.png"),
+    )
 }
 
 async fn office_state(State(state): State<AppState>) -> Json<OfficeSnapshot> {
@@ -352,69 +364,31 @@ const OFFICE_HTML: &str = r#"<!doctype html>
     .d3 { left: 70%; top: 48%; }
     .agent {
       position: absolute;
-      width: 58px;
-      height: 92px;
+      width: 150px;
+      height: 190px;
       transform-origin: 50% 100%;
       animation: bob .72s steps(2) infinite;
       z-index: 5;
       transition: left .38s steps(4), top .38s steps(4);
     }
-    .agent .head {
+    .sprite-crop {
       position: absolute;
-      top: 0;
-      left: 13px;
-      width: 32px;
-      height: 32px;
-      background: #f0b98d;
-      border: 4px solid #2a1d18;
+      inset: 0;
+      overflow: hidden;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 14px 0 rgba(0,0,0,.28)) drop-shadow(0 0 12px rgba(0,0,0,.45));
     }
-    .agent .hair {
+    .sprite-crop img {
       position: absolute;
-      top: -2px;
-      left: 9px;
-      width: 40px;
-      height: 14px;
-      background: #242027;
-    }
-    .agent .body {
-      position: absolute;
-      top: 34px;
-      left: 9px;
-      width: 40px;
-      height: 42px;
-      border: 4px solid #171b1f;
-      background: var(--blue);
-    }
-    .agent .body::before,
-    .agent .body::after {
-      content: "";
-      position: absolute;
-      top: 10px;
-      width: 12px;
-      height: 26px;
-      background: inherit;
-      border: 4px solid #171b1f;
-    }
-    .agent .body::before {
-      left: -16px;
-      animation: type-left .36s steps(2) infinite;
-    }
-    .agent .body::after {
-      right: -16px;
-      animation: type-right .36s steps(2) infinite;
-    }
-    .agent .legs {
-      position: absolute;
-      left: 13px;
-      bottom: 0;
-      width: 12px;
-      height: 22px;
-      background: #253246;
-      box-shadow: 20px 0 #253246;
+      width: 1005px;
+      height: 473px;
+      max-width: none;
+      image-rendering: pixelated;
+      transform: translate(var(--sx), var(--sy));
     }
     .agent .label {
       position: absolute;
-      top: -28px;
+      top: -30px;
       left: 50%;
       transform: translateX(-50%);
       white-space: nowrap;
@@ -422,6 +396,7 @@ const OFFICE_HTML: &str = r#"<!doctype html>
       background: var(--ink);
       padding: 3px 6px;
       font-size: 12px;
+      z-index: 2;
     }
     .agent .spark {
       position: absolute;
@@ -436,9 +411,30 @@ const OFFICE_HTML: &str = r#"<!doctype html>
     .ceo { left: 14%; top: 49%; }
     .coder { left: 45%; top: 41%; animation-delay: .15s; }
     .reviewer { left: 76%; top: 53%; animation-delay: .3s; }
-    .ceo .body { background: var(--pink); }
-    .coder .body { background: var(--blue); }
-    .reviewer .body { background: var(--green); }
+    .sprite-ceo { --sx: -536px; --sy: -128px; }
+    .sprite-coder { --sx: -400px; --sy: -134px; }
+    .sprite-reviewer { --sx: -668px; --sy: -130px; }
+    .asset-strip {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 116px;
+      height: 128px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,.1);
+      background: rgba(4,8,10,.76);
+      z-index: 2;
+    }
+    .asset-strip img {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 760px;
+      height: auto;
+      max-width: 92vw;
+      transform: translate(-50%, -50%);
+      image-rendering: pixelated;
+    }
     .runner {
       position: absolute;
       left: -80px;
@@ -549,6 +545,11 @@ const OFFICE_HTML: &str = r#"<!doctype html>
       .topbar { align-items: flex-start; flex-direction: column; }
       .window { right: 20px; width: 46vw; height: 110px; }
       .desk { width: 160px; }
+      .agent { width: 118px; height: 150px; }
+      .sprite-crop img { width: 790px; height: 372px; }
+      .sprite-ceo { --sx: -421px; --sy: -101px; }
+      .sprite-coder { --sx: -315px; --sy: -105px; }
+      .sprite-reviewer { --sx: -525px; --sy: -103px; }
       .d1 { left: 7%; top: 40%; }
       .d2 { left: 47%; top: 48%; }
       .d3 { left: 24%; top: 62%; }
@@ -568,18 +569,21 @@ const OFFICE_HTML: &str = r#"<!doctype html>
     </header>
     <div class="room-label">live workspace floor / animated agent assets</div>
     <section class="window" aria-hidden="true"><div class="cloud"></div></section>
+    <section class="asset-strip" aria-label="Generated APW agent lifecycle assets">
+      <img src="/assets/apw-agent-lifecycle-sheet.png" alt="Generated pixel-art APW lifecycle sprite sheet">
+    </section>
     <section class="floor" aria-hidden="true">
       <div class="desk d1"></div>
       <div class="desk d2"></div>
       <div class="desk d3"></div>
       <div class="agent ceo" id="agent-ceo">
-        <div class="label" id="label-ceo">CEO routing</div><div class="hair"></div><div class="head"></div><div class="body"></div><div class="legs"></div><div class="spark"></div>
+        <div class="label" id="label-ceo">CEO routing</div><div class="sprite-crop sprite-ceo"><img src="/assets/apw-agent-lifecycle-sheet.png" alt=""></div><div class="spark"></div>
       </div>
       <div class="agent coder" id="agent-coder">
-        <div class="label" id="label-coder">Coder building</div><div class="hair"></div><div class="head"></div><div class="body"></div><div class="legs"></div><div class="spark"></div>
+        <div class="label" id="label-coder">Coder building</div><div class="sprite-crop sprite-coder"><img src="/assets/apw-agent-lifecycle-sheet.png" alt=""></div><div class="spark"></div>
       </div>
       <div class="agent reviewer" id="agent-reviewer">
-        <div class="label" id="label-reviewer">Review checking</div><div class="hair"></div><div class="head"></div><div class="body"></div><div class="legs"></div><div class="spark"></div>
+        <div class="label" id="label-reviewer">Review checking</div><div class="sprite-crop sprite-reviewer"><img src="/assets/apw-agent-lifecycle-sheet.png" alt=""></div><div class="spark"></div>
       </div>
       <div class="runner"></div>
     </section>
