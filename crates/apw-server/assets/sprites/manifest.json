@@ -1,0 +1,14 @@
+{
+  "source": "apw-agent-lifecycle-sheet-chromakey.png",
+  "kind": "generated-original-apw-lifecycle-sprites",
+  "sprites": [
+    { "id": "baby-trainee", "file": "baby-trainee.png", "width": 190, "height": 208 },
+    { "id": "runner-apprentice", "file": "runner-apprentice.png", "width": 193, "height": 283 },
+    { "id": "planner-tablet", "file": "planner-tablet.png", "width": 194, "height": 323 },
+    { "id": "coder-keyboard", "file": "coder-keyboard.png", "width": 198, "height": 313 },
+    { "id": "cyber-ceo", "file": "cyber-ceo.png", "width": 198, "height": 338 },
+    { "id": "mentor-scientist", "file": "mentor-scientist.png", "width": 205, "height": 328 },
+    { "id": "elder-archivist", "file": "elder-archivist.png", "width": 205, "height": 312 },
+    { "id": "data-orb", "file": "data-orb.png", "width": 228, "height": 293 }
+  ]
+}

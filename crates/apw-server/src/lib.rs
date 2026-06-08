@@ -36,6 +36,42 @@ pub fn routes() -> axum::Router {
             "/assets/apw-agent-lifecycle-sheet.png",
             axum::routing::get(agent_sheet),
         )
+        .route(
+            "/assets/sprites/baby-trainee.png",
+            axum::routing::get(sprite_baby_trainee),
+        )
+        .route(
+            "/assets/sprites/runner-apprentice.png",
+            axum::routing::get(sprite_runner_apprentice),
+        )
+        .route(
+            "/assets/sprites/planner-tablet.png",
+            axum::routing::get(sprite_planner_tablet),
+        )
+        .route(
+            "/assets/sprites/coder-keyboard.png",
+            axum::routing::get(sprite_coder_keyboard),
+        )
+        .route(
+            "/assets/sprites/cyber-ceo.png",
+            axum::routing::get(sprite_cyber_ceo),
+        )
+        .route(
+            "/assets/sprites/mentor-scientist.png",
+            axum::routing::get(sprite_mentor_scientist),
+        )
+        .route(
+            "/assets/sprites/elder-archivist.png",
+            axum::routing::get(sprite_elder_archivist),
+        )
+        .route(
+            "/assets/sprites/data-orb.png",
+            axum::routing::get(sprite_data_orb),
+        )
+        .route(
+            "/assets/sprites/manifest.json",
+            axum::routing::get(sprite_manifest),
+        )
         .route("/api/office/state", axum::routing::get(office_state))
         .route("/health", axum::routing::get(|| async { "ok" }))
         .route("/status", axum::routing::get(|| async { "ok" }))
@@ -56,6 +92,55 @@ async fn agent_sheet() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, HeaderValue::from_static("image/png"))],
         include_bytes!("../assets/apw-agent-lifecycle-sheet.png"),
+    )
+}
+
+async fn sprite_baby_trainee() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/baby-trainee.png"))
+}
+
+async fn sprite_runner_apprentice() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/runner-apprentice.png"))
+}
+
+async fn sprite_planner_tablet() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/planner-tablet.png"))
+}
+
+async fn sprite_coder_keyboard() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/coder-keyboard.png"))
+}
+
+async fn sprite_cyber_ceo() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/cyber-ceo.png"))
+}
+
+async fn sprite_mentor_scientist() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/mentor-scientist.png"))
+}
+
+async fn sprite_elder_archivist() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/elder-archivist.png"))
+}
+
+async fn sprite_data_orb() -> impl IntoResponse {
+    png(include_bytes!("../assets/sprites/data-orb.png"))
+}
+
+async fn sprite_manifest() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/json"),
+        )],
+        include_bytes!("../assets/sprites/manifest.json"),
+    )
+}
+
+fn png(bytes: &'static [u8]) -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, HeaderValue::from_static("image/png"))],
+        bytes,
     )
 }
 
@@ -371,20 +456,12 @@ const OFFICE_HTML: &str = r#"<!doctype html>
       z-index: 5;
       transition: left .38s steps(4), top .38s steps(4);
     }
-    .sprite-crop {
+    .agent-sprite {
       position: absolute;
       inset: 0;
-      overflow: hidden;
       image-rendering: pixelated;
+      object-fit: contain;
       filter: drop-shadow(0 14px 0 rgba(0,0,0,.28)) drop-shadow(0 0 12px rgba(0,0,0,.45));
-    }
-    .sprite-crop img {
-      position: absolute;
-      width: 1005px;
-      height: 473px;
-      max-width: none;
-      image-rendering: pixelated;
-      transform: translate(var(--sx), var(--sy));
     }
     .agent .label {
       position: absolute;
@@ -411,9 +488,6 @@ const OFFICE_HTML: &str = r#"<!doctype html>
     .ceo { left: 14%; top: 49%; }
     .coder { left: 45%; top: 41%; animation-delay: .15s; }
     .reviewer { left: 76%; top: 53%; animation-delay: .3s; }
-    .sprite-ceo { --sx: -536px; --sy: -128px; }
-    .sprite-coder { --sx: -400px; --sy: -134px; }
-    .sprite-reviewer { --sx: -668px; --sy: -130px; }
     .asset-strip {
       position: absolute;
       left: 24px;
@@ -424,17 +498,19 @@ const OFFICE_HTML: &str = r#"<!doctype html>
       border: 2px solid rgba(255,255,255,.1);
       background: rgba(4,8,10,.76);
       z-index: 2;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 22px;
+      padding: 10px 16px;
     }
     .asset-strip img {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 760px;
-      height: auto;
-      max-width: 92vw;
-      transform: translate(-50%, -50%);
+      width: auto;
+      height: 106px;
       image-rendering: pixelated;
+      object-fit: contain;
     }
+    .asset-strip .orb { height: 96px; }
     .runner {
       position: absolute;
       left: -80px;
@@ -546,10 +622,7 @@ const OFFICE_HTML: &str = r#"<!doctype html>
       .window { right: 20px; width: 46vw; height: 110px; }
       .desk { width: 160px; }
       .agent { width: 118px; height: 150px; }
-      .sprite-crop img { width: 790px; height: 372px; }
-      .sprite-ceo { --sx: -421px; --sy: -101px; }
-      .sprite-coder { --sx: -315px; --sy: -105px; }
-      .sprite-reviewer { --sx: -525px; --sy: -103px; }
+      .asset-strip { justify-content: start; overflow-x: auto; }
       .d1 { left: 7%; top: 40%; }
       .d2 { left: 47%; top: 48%; }
       .d3 { left: 24%; top: 62%; }
@@ -570,20 +643,27 @@ const OFFICE_HTML: &str = r#"<!doctype html>
     <div class="room-label">live workspace floor / animated agent assets</div>
     <section class="window" aria-hidden="true"><div class="cloud"></div></section>
     <section class="asset-strip" aria-label="Generated APW agent lifecycle assets">
-      <img src="/assets/apw-agent-lifecycle-sheet.png" alt="Generated pixel-art APW lifecycle sprite sheet">
+      <img src="/assets/sprites/baby-trainee.png" alt="baby trainee sprite">
+      <img src="/assets/sprites/runner-apprentice.png" alt="runner apprentice sprite">
+      <img src="/assets/sprites/planner-tablet.png" alt="planner tablet sprite">
+      <img src="/assets/sprites/coder-keyboard.png" alt="coder keyboard sprite">
+      <img src="/assets/sprites/cyber-ceo.png" alt="cyber CEO sprite">
+      <img src="/assets/sprites/mentor-scientist.png" alt="mentor scientist sprite">
+      <img src="/assets/sprites/elder-archivist.png" alt="elder archivist sprite">
+      <img class="orb" src="/assets/sprites/data-orb.png" alt="data orb sprite">
     </section>
     <section class="floor" aria-hidden="true">
       <div class="desk d1"></div>
       <div class="desk d2"></div>
       <div class="desk d3"></div>
       <div class="agent ceo" id="agent-ceo">
-        <div class="label" id="label-ceo">CEO routing</div><div class="sprite-crop sprite-ceo"><img src="/assets/apw-agent-lifecycle-sheet.png" alt=""></div><div class="spark"></div>
+        <div class="label" id="label-ceo">CEO routing</div><img class="agent-sprite" src="/assets/sprites/cyber-ceo.png" alt=""><div class="spark"></div>
       </div>
       <div class="agent coder" id="agent-coder">
-        <div class="label" id="label-coder">Coder building</div><div class="sprite-crop sprite-coder"><img src="/assets/apw-agent-lifecycle-sheet.png" alt=""></div><div class="spark"></div>
+        <div class="label" id="label-coder">Coder building</div><img class="agent-sprite" src="/assets/sprites/coder-keyboard.png" alt=""><div class="spark"></div>
       </div>
       <div class="agent reviewer" id="agent-reviewer">
-        <div class="label" id="label-reviewer">Review checking</div><div class="sprite-crop sprite-reviewer"><img src="/assets/apw-agent-lifecycle-sheet.png" alt=""></div><div class="spark"></div>
+        <div class="label" id="label-reviewer">Review checking</div><img class="agent-sprite" src="/assets/sprites/mentor-scientist.png" alt=""><div class="spark"></div>
       </div>
       <div class="runner"></div>
     </section>
