@@ -39,7 +39,7 @@ Every feature below cites its upstream file/endpoint in the *From* column.
 | `apw-rs` | 54 | 0 | 12 | 3 | 39 |
 | `lmstudio` | 2 | 0 | 0 | 0 | 2 |
 | `opencode-manager` | 17 | 0 | 1 | 14 | 2 |
-| `pixtuoid` | 14 | 0 | 2 | 12 | 0 |
+| [`pixtuoid`](sources/pixtuoid.md) | 14 | 0 | 2 | 12 | 0 |
 | **Total** | **142** | **0** | **21** | **74** | **47** |
 
 ---

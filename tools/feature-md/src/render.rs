@@ -142,13 +142,21 @@ fn write_summary(out: &mut String, r: &Registry) {
             .filter(|f| f.status == "deferred" || f.status == "not-adopted")
             .count();
         let done = feats.iter().filter(|f| f.status == "done").count();
-        let _ = writeln!(out, "| `{sid}` | {n} | {done} | {p} | {pl} | {d} |");
+        let source = source_summary_label(sid);
+        let _ = writeln!(out, "| {source} | {n} | {done} | {p} | {pl} | {d} |");
     }
     let _ = writeln!(
         out,
         "| **Total** | **{total_features}** | **{adopted}** | **{porting}** | **{planned}** | **{deferred}** |"
     );
     out.push_str("\n---\n\n");
+}
+
+fn source_summary_label(source_id: &str) -> String {
+    match source_id {
+        "pixtuoid" => "[`pixtuoid`](sources/pixtuoid.md)".to_string(),
+        _ => format!("`{source_id}`"),
+    }
 }
 
 fn write_phase1_sections(out: &mut String, r: &Registry) {
